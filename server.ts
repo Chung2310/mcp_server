@@ -10,6 +10,8 @@ app.use(express.json());
 
 import { runPipeline } from "./orchestrator/runPipeline";
 import { loadMemory, clearMemory } from "./memory/memory.service";
+import { getCache, setCache } from "./memory/cache.service";
+
 
 
 
@@ -21,11 +23,26 @@ app.post("/mcp/run", async (req, res) => {
   }
 
   try {
+    // 🔍 Kiểm tra Cache trước
+    const cached = getCache(prompt);
+    if (cached) {
+      console.log(`\n💎 TRẢ VỀ TỪ CACHE (0 TOKEN): "${prompt}"\n`);
+      return res.json({
+        message: "Lấy từ bộ nhớ đệm ⚡",
+        result: cached,
+      });
+    }
+
     const result = await runPipeline(prompt);
+    
+    // 💾 Lưu vào Cache cho lần sau
+    setCache(prompt, result);
+
     res.json({
       message: "Xử lý thành công 🚀",
       result,
     });
+
   } catch (error: any) {
     console.error("Lỗi pipeline:", error.message);
     res.status(500).json({

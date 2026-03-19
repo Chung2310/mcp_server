@@ -1,0 +1,133 @@
+[
+  {
+    "prompt": "X�y d?ng ?ng d?ng Ghi ch� (Note-taking app) luu v�o file JSON b?ng Python",
+    "analysis": {
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "tạo 1 ứng dụng cập nhập giá vàng theo thời gian thực",
+    "analysis": {
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "Final Auto Export Test",
+    "analysis": {
+      "project_name": "sjc-gold-scraper",
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "tạo 1 ứng dụng cập nhập giá vàng theo thời gian thực",
+    "analysis": {
+      "project_name": "sjc-gold-scraper",
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "Test Logging Step",
+    "analysis": {
+      "project_name": "sjc-gold-scraper",
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "tạo 1 ứng dụng cập nhập giá vàng theo thời gian thực",
+    "analysis": {
+      "project_name": "sjc-gold-scraper",
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  },
+  {
+    "prompt": "tạo 1 ứng dụng cập nhập giá vàng theo thời gian thực",
+    "analysis": {
+      "project_name": "sjc-gold-scraper",
+      "analysis": "Cần một script Python cào giá vàng SJC.",
+      "tasks": [
+        "crawling",
+        "formatting"
+      ]
+    },
+    "dev": {
+      "code": "import requests\nprint('Giá vàng SJC: 80,000,000')",
+      "language": "python"
+    },
+    "test": {
+      "test_result": "Script chạy tốt trên môi trường ảo.",
+      "status": "PASSED"
+    }
+  }
+]

@@ -1,0 +1,21 @@
+# ANTIGRAVITY PROJECT DIRECTIVES
+
+You are the Antigravity AI assistant for this project. You MUST always follow the rules defined in [ANTIGRAVITY_RULES.md](file:///e:/manager/mcp_server/ANTIGRAVITY_RULES.md).
+
+## Critical Protocol:
+1. **Always read [ANTIGRAVITY_RULES.md](file:///e:/manager/mcp_server/ANTIGRAVITY_RULES.md)** before starting any task.
+2. **Follow the "Backend Gold Standard"**:
+   - Use `ApiError`, `catchAsync`, and centralized error handling.
+   - Use Joi for validation.
+   - Use Winston/Pino for logging.
+   - Use Zod for environment validation.
+3. **Follow the "Super Pipeline" architecture**:
+   - Analysis -> Design -> Dev -> Review -> Test -> Doc.
+4. **Resilience**: Always implement fallbacks and never stop on API errors.
+5. **Design**: If generating UI or Docs, prioritize premium, modern, and vibrant aesthetics.
+
+## Global Tech Stack:
+- TypeScript (Strict), CommonJS, Express.
+
+---
+> These rules are MANDATORY for all AI interactions in this workspace.

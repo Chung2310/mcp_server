@@ -1,67 +1,95 @@
 import { analysisAgent } from "../agents/analysis.agent";
+import { analysisDocAgent } from "../agents/analysis-doc.agent";
 import { devAgent } from "../agents/dev.agent";
+import { reviewAgent } from "../agents/review.agent";
 import { testAgent } from "../agents/test.agent";
+import { docAgent } from "../agents/doc.agent";
 import { addMemory } from "../memory/memory.service";
-import { callGemini } from "../services/gemini.service";
 import fs from "fs";
-
 import path from "path";
 
+/**
+ * Super Pipeline: Loop-Correction, Parallelism & Dashboard Logging.
+ */
 export async function runPipeline(prompt: string) {
-  console.log(`\n--- 🚀 Bắt đầu Pipeline cho: "${prompt}" ---`);
+  const startTime = Date.now();
+  console.log(`\n┌─────────────────────────────────────────────────────────────┐`);
+  console.log(`│ 🚀 KHỞI ĐỘNG SUPER PIPELINE (DeepSeek x Parallel x Loop)    │`);
+  console.log(`└─────────────────────────────────────────────────────────────┘\n`);
 
-  console.log(`[Step 1] 🧠 Đang gọi Analysis Agent (Gemini)...`);
+  const slug = prompt.toLowerCase().replace(/ /g, "-").slice(0, 20); // Tạm thời tạo slug đơn giản
+  const outputDir = path.join(process.cwd(), "outputs", slug || "unnamed");
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const logPath = path.join(outputDir, "execution.log");
+  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+  const log = (msg: string) => {
+    console.log(msg);
+    logStream.write(`${new Date().toISOString()} - ${msg}\n`);
+  };
+
+  // --- Step 1 & 2: Analysis & Design ---
+  log(`[Step 1/2] 🧠 Phân tích & 📝 Thiết kế hệ thống...`);
   const analysis = await analysisAgent(prompt);
-  console.log(`✅ Phân tích xong: ${analysis.project_name || "untitled"}`);
+  const detailedDoc = await analysisDocAgent(analysis);
+  fs.writeFileSync(path.join(outputDir, "System_Design.md"), detailedDoc);
+  log(`✅ Thiết kế xong: outputs/${slug}/System_Design.md`);
 
-  let dev;
-  console.log(`[Step 2] 💻 Đang gọi Dev Agent (Claude)...`);
-  try {
-    dev = await devAgent(analysis);
-  } catch (err: any) {
-    console.warn(`⚠️ Claude thất bại, sử dụng Gemini thay thế cho Dev Agent...`);
-    const recoveryPrompt = `Bạn là Dev Agent. Hãy viết code dựa trên phân tích này:\n${JSON.stringify(analysis)}`;
-    const res = await callGemini(recoveryPrompt);
-    dev = { code: res, language: "python" }; // Default to python
-  }
-  console.log(`✅ Đã viết xong code (${dev.language})`);
+  // --- Step 3: Development ---
+  log(`[Step 3] 💻 Phát triển mã nguồn ban đầu...`);
+  let dev = await devAgent(analysis);
+  const originalDev = { ...dev };
+  log(`✅ Code gốc hoàn tất.`);
 
-  let test;
-  console.log(`[Step 3] 🧪 Đang gọi Test Agent (OpenAI)...`);
-  try {
-    test = await testAgent(dev);
-  } catch (err: any) {
-    console.warn(`⚠️ OpenAI thất bại, sử dụng Gemini thay thế cho Test Agent...`);
-    const recoveryPrompt = `Bạn là Test Agent. Hãy kiểm thử đoạn code này:\n${dev.code}`;
-    const res = await callGemini(recoveryPrompt);
-    test = { test_result: res, status: "PASSED" }; // Bypass test if failing
-  }
-  console.log(`✅ Kiểm thử hoàn tất: ${test.status}`);
+  // --- Step 4 & 5 Loop: Review & Test (Self-Correction) ---
+  let retries = 0;
+  const MAX_RETRIES = 2;
+  let testResult: any;
+  let reviewedDev = dev;
+  let lastError = "";
 
+  while (retries <= MAX_RETRIES) {
+    log(`[Step 4] 🧐 Đánh giá & Tối ưu hóa (Lần ${retries + 1})...`);
+    reviewedDev = await reviewAgent(reviewedDev, lastError);
+    
+    log(`[Step 5] 🧪 Kiểm thử mã nguồn...`);
+    testResult = await testAgent(reviewedDev);
 
-  const result = { prompt, analysis, dev, test };
-
-  console.log(`[Step 4] 💾 Đang lưu vào bộ nhớ JSON...`);
-  addMemory(result);
-
-
-  // 📂 Tự động xuất code ra file riêng
-  try {
-    const outputDir = path.join(process.cwd(), "outputs");
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir);
+    if (testResult.status === "PASSED") {
+      log(`✅ KIỂM THỬ THÀNH CÔNG (Sau ${retries} lần sửa).`);
+      break;
+    } else {
+      retries++;
+      lastError = testResult.test_result || "Lỗi không xác định";
+      log(`⚠️ KIỂM THỬ THẤT BẠI. Đang chuẩn bị sửa lỗi (Retry ${retries}/${MAX_RETRIES})...`);
+      if (retries > MAX_RETRIES) log(`❌ Đã hết lượt sửa lỗi. Chấp nhận kết quả hiện tại.`);
     }
-
-    const projectName = analysis.project_name || "untitled-project";
-    const ext = dev.language === "python" ? "py" : (dev.language === "javascript" ? "js" : "txt");
-    const filename = `${projectName}.${ext}`;
-    const filePath = path.join(outputDir, filename);
-
-    fs.writeFileSync(filePath, dev.code);
-    console.log(`\n💾 Đã tự động lưu code tại: ${filePath}\n`);
-  } catch (err: any) {
-    console.error("❌ Lỗi khi xuất code ra file:", err.message);
   }
 
-  return result;
-}
+  // --- Step 6: Parallel Documentation & Exports ---
+  log(`[Step 6] ⚡ Đang chạy song song: Tạo tài liệu & Xuất file...`);
+  
+  const [doc] = await Promise.all([
+    docAgent(analysis, reviewedDev),
+    (async () => {
+      const ext = reviewedDev.language === "python" ? "py" : (reviewedDev.language === "typescript" ? "ts" : "js");
+      fs.writeFileSync(path.join(outputDir, `index.${ext}`), reviewedDev.code);
+      fs.writeFileSync(path.join(outputDir, `original-index.${ext}`), originalDev.code);
+    })()
+  ]);
+
+  fs.writeFileSync(path.join(outputDir, "README.md"), doc);
+  log(`✅ Tài liệu (README.md) hoàn tất.`);
+
+  // --- Finalization ---
+  addMemory({ prompt, analysis, dev: reviewedDev, test: testResult, doc, originalDev });
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  
+  log(`\n┌─────────────────────────────────────────────────────────────┐`);
+  log(`│ ✨ HOÀN TẤT TRONG ${duration}S                                    │`);
+  log(`│ 📂 Kết quả lưu tại: outputs/${slug}                    │`);
+  log(`└─────────────────────────────────────────────────────────────┘\n`);
+
+  logStream.end();
+  return { analysis, dev: reviewedDev, test: testResult, doc };
+}

@@ -1,13 +1,13 @@
 import axios from "axios";
+import { logger } from "./logger";
+import { env } from "./env.config";
 
 export async function callClaude(prompt: string) {
-  if (process.env.USE_MOCK === "true") {
+  if (env.USE_MOCK) {
     return JSON.stringify({ code: "import requests\nprint('Giá vàng SJC: 80,000,000')", language: "python" });
   }
 
-
   const models = [
-
     "claude-3-7-sonnet-20250219",
     "claude-3-5-sonnet-20240620",
     "claude-3-5-sonnet-latest",
@@ -28,7 +28,7 @@ export async function callClaude(prompt: string) {
         },
         {
           headers: {
-            "x-api-key": process.env.CLAUDE_API_KEY!,
+            "x-api-key": env.CLAUDE_API_KEY!,
             "anthropic-version": "2023-06-01",
           },
         }
@@ -36,14 +36,13 @@ export async function callClaude(prompt: string) {
       return res.data.content[0].text;
     } catch (error: any) {
       if (error.response) {
-        console.warn(`[Claude] Model ${model} thất bại (${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
+        logger.warn(`[Claude] Model ${model} failed (${error.response.status}): ${JSON.stringify(error.response.data)}`);
       } else {
-        console.warn(`[Claude] Model ${model} thất bại:`, error.message);
+        logger.warn(`[Claude] Model ${model} failed: ${error.message}`);
       }
       lastError = error;
     }
-
   }
 
-  throw new Error(`Tất cả model Claude đều thất bại. Lỗi cuối: ${lastError?.message}`);
+  throw new Error(`All Claude models failed. Last error: ${lastError?.message}`);
 }

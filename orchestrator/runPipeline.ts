@@ -5,6 +5,7 @@ import { reviewAgent } from "../agents/review.agent";
 import { testAgent } from "../agents/test.agent";
 import { docAgent } from "../agents/doc.agent";
 import { addMemory } from "../memory/memory.service";
+import { createPipelineLogger } from "../services/logger";
 import fs from "fs";
 import path from "path";
 
@@ -13,33 +14,29 @@ import path from "path";
  */
 export async function runPipeline(prompt: string) {
   const startTime = Date.now();
-  console.log(`\n┌─────────────────────────────────────────────────────────────┐`);
-  console.log(`│ 🚀 KHỞI ĐỘNG SUPER PIPELINE (DeepSeek x Parallel x Loop)    │`);
-  console.log(`└─────────────────────────────────────────────────────────────┘\n`);
-
-  const slug = prompt.toLowerCase().replace(/ /g, "-").slice(0, 20); // Tạm thời tạo slug đơn giản
+  
+  const slug = prompt.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30);
   const outputDir = path.join(process.cwd(), "outputs", slug || "unnamed");
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-  const logPath = path.join(outputDir, "execution.log");
-  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
-  const log = (msg: string) => {
-    console.log(msg);
-    logStream.write(`${new Date().toISOString()} - ${msg}\n`);
-  };
+  const log = createPipelineLogger(outputDir);
+
+  log.info(`\n┌─────────────────────────────────────────────────────────────┐`);
+  log.info(`│ 🚀 KHỞI ĐỘNG SUPER PIPELINE (DeepSeek x Parallel x Loop)    │`);
+  log.info(`└─────────────────────────────────────────────────────────────┘\n`);
 
   // --- Step 1 & 2: Analysis & Design ---
-  log(`[Step 1/2] 🧠 Phân tích & 📝 Thiết kế hệ thống...`);
+  log.info(`[Step 1/2] 🧠 Phân tích & 📝 Thiết kế hệ thống...`);
   const analysis = await analysisAgent(prompt);
   const detailedDoc = await analysisDocAgent(analysis);
   fs.writeFileSync(path.join(outputDir, "System_Design.md"), detailedDoc);
-  log(`✅ Thiết kế xong: outputs/${slug}/System_Design.md`);
+  log.info(`✅ Thiết kế xong: outputs/${slug}/System_Design.md`);
 
   // --- Step 3: Development ---
-  log(`[Step 3] 💻 Phát triển mã nguồn ban đầu...`);
+  log.info(`[Step 3] 💻 Phát triển mã nguồn ban đầu...`);
   let dev = await devAgent(analysis);
   const originalDev = { ...dev };
-  log(`✅ Code gốc hoàn tất.`);
+  log.info(`✅ Code gốc hoàn tất.`);
 
   // --- Step 4 & 5 Loop: Review & Test (Self-Correction) ---
   let retries = 0;
@@ -49,25 +46,25 @@ export async function runPipeline(prompt: string) {
   let lastError = "";
 
   while (retries <= MAX_RETRIES) {
-    log(`[Step 4] 🧐 Đánh giá & Tối ưu hóa (Lần ${retries + 1})...`);
+    log.info(`[Step 4] 🧐 Đánh giá & Tối ưu hóa (Lần ${retries + 1})...`);
     reviewedDev = await reviewAgent(reviewedDev, lastError);
     
-    log(`[Step 5] 🧪 Kiểm thử mã nguồn...`);
+    log.info(`[Step 5] 🧪 Kiểm thử mã nguồn...`);
     testResult = await testAgent(reviewedDev);
 
     if (testResult.status === "PASSED") {
-      log(`✅ KIỂM THỬ THÀNH CÔNG (Sau ${retries} lần sửa).`);
+      log.info(`✅ KIỂM THỬ THÀNH CÔNG (Sau ${retries} lần sửa).`);
       break;
     } else {
       retries++;
       lastError = testResult.test_result || "Lỗi không xác định";
-      log(`⚠️ KIỂM THỬ THẤT BẠI. Đang chuẩn bị sửa lỗi (Retry ${retries}/${MAX_RETRIES})...`);
-      if (retries > MAX_RETRIES) log(`❌ Đã hết lượt sửa lỗi. Chấp nhận kết quả hiện tại.`);
+      log.info(`⚠️ KIỂM THỬ THẤT BẠI. Đang chuẩn bị sửa lỗi (Retry ${retries}/${MAX_RETRIES})...`);
+      if (retries > MAX_RETRIES) log.info(`❌ Đã hết lượt sửa lỗi. Chấp nhận kết quả hiện tại.`);
     }
   }
 
   // --- Step 6: Parallel Documentation & Exports ---
-  log(`[Step 6] ⚡ Đang chạy song song: Tạo tài liệu & Xuất file...`);
+  log.info(`[Step 6] ⚡ Đang chạy song song: Tạo tài liệu & Xuất file...`);
   
   const [doc] = await Promise.all([
     docAgent(analysis, reviewedDev),
@@ -79,17 +76,16 @@ export async function runPipeline(prompt: string) {
   ]);
 
   fs.writeFileSync(path.join(outputDir, "README.md"), doc);
-  log(`✅ Tài liệu (README.md) hoàn tất.`);
+  log.info(`✅ Tài liệu (README.md) hoàn tất.`);
 
   // --- Finalization ---
   addMemory({ prompt, analysis, dev: reviewedDev, test: testResult, doc, originalDev });
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   
-  log(`\n┌─────────────────────────────────────────────────────────────┐`);
-  log(`│ ✨ HOÀN TẤT TRONG ${duration}S                                    │`);
-  log(`│ 📂 Kết quả lưu tại: outputs/${slug}                    │`);
-  log(`└─────────────────────────────────────────────────────────────┘\n`);
+  log.info(`\n┌─────────────────────────────────────────────────────────────┐`);
+  log.info(`│ ✨ HOÀN TẤT TRONG ${duration}S                                    │`);
+  log.info(`│ 📂 Kết quả lưu tại: outputs/${slug}                    │`);
+  log.info(`└─────────────────────────────────────────────────────────────┘\n`);
 
-  logStream.end();
   return { analysis, dev: reviewedDev, test: testResult, doc };
 }

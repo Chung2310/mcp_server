@@ -1,5 +1,5 @@
 import { DOC_RULE } from "../rules/doc.rule";
-import { callDeepSeek } from "../services/deepseek.service";
+import { LLMOrchestrator } from "../services/llm.orchestrator";
 
 export async function docAgent(analysis: any, dev: any) {
   const prompt = `
@@ -14,5 +14,5 @@ ${dev.code}
 Hãy tạo một file README.md cho dự án này.
 `;
 
-  return await callDeepSeek(prompt);
+  return await LLMOrchestrator.callWithFallback(prompt);
 }

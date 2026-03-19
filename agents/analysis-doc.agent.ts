@@ -1,5 +1,5 @@
 import { ANALYSIS_DOC_RULE } from "../rules/analysis-doc.rule";
-import { callDeepSeek } from "../services/deepseek.service";
+import { LLMOrchestrator } from "../services/llm.orchestrator";
 
 export async function analysisDocAgent(analysis: any) {
   const prompt = `
@@ -11,5 +11,5 @@ ${JSON.stringify(analysis, null, 2)}
 Hãy tạo bản thiết kế hệ thống chi tiết.
 `;
 
-  return await callDeepSeek(prompt);
+  return await LLMOrchestrator.callWithFallback(prompt);
 }

@@ -1,15 +1,9 @@
 import { loadMemory } from "../memory/memory.service";
 import { DEV_RULE } from "../rules/dev.rule";
 import { BACKEND_STRICT_RULE } from "../rules/backend_strict.rule";
-import { callDeepSeek } from "../services/deepseek.service";
+import { LLMOrchestrator } from "../services/llm.orchestrator";
 import { extractJSON } from "../helper/extractJSON";
 
-/**
- * Tác nhân phát triển: Nhận bản thiết kế và viết mã nguồn.
- * Bổ sung quy tắc Backend Nghiêm ngặt để đảm bảo chất lượng.
- * @param SPEC - Bản thiết kế từ Analysis Agent.
- * @returns Đối tượng chứa mã nguồn và ngôn ngữ.
- */
 export async function devAgent(SPEC: any) {
   const memory = loadMemory().slice(-3);
     
@@ -28,6 +22,6 @@ SPEC:
 ${JSON.stringify(SPEC, null, 2)}
 `;
 
-  const res = await callDeepSeek(prompt, true);
+  const res = await LLMOrchestrator.callWithFallback(prompt, true);
   return extractJSON(res);
 }
